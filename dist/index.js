@@ -113,17 +113,17 @@ function getLabels(configurationData) {
 }
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug('Get token...');
-        const token = core.getInput('repo-token', { required: true });
-        core.debug('Get configuration-path...');
-        const configurationPath = core.getInput('configuration-path', {
-            required: true
-        });
-        core.debug('Create client...');
-        const client = github.getOctokit(token);
-        core.debug('Create repo object...');
-        const repo = new Repository(github.context.repo.owner, github.context.repo.repo, client, token);
         try {
+            core.debug('Get token...');
+            const token = core.getInput('repo-token', { required: true });
+            core.debug('Get configuration-path...');
+            const configurationPath = core.getInput('configuration-path', {
+                required: true
+            });
+            core.debug('Create client...');
+            const client = github.getOctokit(token);
+            core.debug('Create repo object...');
+            const repo = new Repository(github.context.repo.owner, github.context.repo.repo, client, token);
             core.debug('Create issue object...');
             const triggeredIssue = new Issue(repo, client);
             const configurationData = yield repo.getConfigurationFile(configurationPath);

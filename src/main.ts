@@ -20,6 +20,21 @@ class Repository {
     this.token = token
     this.client = client
   }
+
+  async getConfigurationFile(configurationPath: string): Promise<string> {
+    core.debug(`Get configuration file content ${configurationPath}`)
+    const configurationFile = await this.client.repos.getContent({
+      owner: this.owner,
+      repo: this.repo,
+      path: configurationPath
+    })
+    const data: any = configurationFile.data
+    if (!data.content) {
+      core.setFailed(`Configuration file at ${configurationFile} not found!`)
+    }
+
+    return Buffer.from(data.content, 'base64').toString('utf-8')
+  }
 }
 
 class Issue {
@@ -61,6 +76,7 @@ async function run(): Promise<void> {
   core.debug('Get token...')
   const token = core.getInput('repo-token', {required: true})
   core.debug('Get configuration-path...')
+
   const configurationPath = core.getInput('configuration-path', {
     required: true
   })
@@ -78,26 +94,14 @@ async function run(): Promise<void> {
   try {
     core.debug('Create issue object...')
     const triggeredIssue = new Issue(repo, client)
-    core.debug(`Get configuration file content ${configurationPath}`)
-    const configurationFile = await client.repos.getContent({
-      owner: repo.owner,
-      repo: repo.repo,
-      path: configurationPath
-    })
-    const data: any = configurationFile.data
-    if (!data.content) {
-      core.setFailed(`Configuration file at ${configurationFile} not found!`)
-    }
-    const configurationData: string = Buffer.from(
-      data.content,
-      'base64'
-    ).toString('utf-8')
-    core.debug(`Configuration data decoded: ${configurationData}`)
+    const configurationData: string = await repo.getConfigurationFile(
+      configurationPath
+    )
 
-    const labels = yaml.safeLoadAll(configurationData)
+    const labels: any = yaml.safeLoad(configurationData)
     core.debug(`Config file:\n${labels}`)
-    for (const parsed in labels[0]) {
-      const regexes = labels[0][parsed]
+    for (const parsed in labels) {
+      const regexes = labels[parsed]
       for (const regex in regexes) {
         core.debug(`Checking for '${regex}'`)
         const isRegex = regex.match(/^\/(.+)\/(.*)$/)

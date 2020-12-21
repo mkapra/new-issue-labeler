@@ -118,6 +118,7 @@ async function run(): Promise<void> {
       configurationPath
     )
 
+    core.debug(`ConfigFile getFile(): ${configurationData}`)
     const configurationFile: any = yaml.safeLoad(configurationData)
     const labelsMap: Map<string, string[]> = getLabels(configurationFile)
 

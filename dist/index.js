@@ -128,6 +128,7 @@ function run() {
             core.debug('Create issue object...');
             const triggeredIssue = new Issue(repo, client);
             const configurationData = yield repo.getConfigurationFile(configurationPath);
+            core.debug(`ConfigFile getFile(): ${configurationData}`);
             const configurationFile = yaml.safeLoad(configurationData);
             const labelsMap = getLabels(configurationFile);
             const newLabels = [];

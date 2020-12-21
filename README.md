@@ -5,16 +5,16 @@
 **Example configuration:**
 ```yaml
 documentation:
-  - '/(README|docs|documentation|document)/i'
+  - '/.*(README|docs|documentation|document).*/i'
   
 enhancement:
-  - '/add/could you/would be nice/i'
+  - '/.*(add|could you|would be nice|should).*/i'
   
 help wanted:
-  - '/help/i'
+  - '/.*help.*/i'
 
 critical:
-    - '/(critical|urgent)/i'
+    - '/.*(critical|urgent).*/i'
 ```
 
 ### Create `.github/workflows/new-issue-labeler.yml` file

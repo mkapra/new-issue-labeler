@@ -88,9 +88,11 @@ async function run(): Promise<void> {
     if (!data.content) {
       core.setFailed(`Configuration file at ${configurationFile} not found!`)
     }
-    const configurationData = Buffer.from(data.content, 'base64').toString(
-      'utf-8'
-    )
+    const configurationData: string = Buffer.from(
+      data.content,
+      'base64'
+    ).toString('utf-8')
+    core.debug(`Configuration data decoded: ${configurationData}`)
 
     const labels = yaml.safeLoadAll(configurationData)
     core.debug(`Config file:\n${labels}`)

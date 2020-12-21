@@ -101,6 +101,7 @@ function run() {
                 core.setFailed(`Configuration file at ${configurationFile} not found!`);
             }
             const configurationData = Buffer.from(data.content, 'base64').toString('utf-8');
+            core.debug(`Configuration data decoded: ${configurationData}`);
             const labels = yaml.safeLoadAll(configurationData);
             core.debug(`Config file:\n${labels}`);
             for (const parsed in labels[0]) {

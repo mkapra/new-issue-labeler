@@ -107,7 +107,7 @@ function run() {
             const triggeredIssue = new Issue(repo, client);
             const configurationData = yield repo.getConfigurationFile(configurationPath);
             const labels = yaml.safeLoad(configurationData);
-            core.debug(`Config file:\n${labels}`);
+            core.debug(`Config file:\n${labels.toString()}`);
             for (const parsed in labels) {
                 const regexes = labels[parsed];
                 for (const regex in regexes) {

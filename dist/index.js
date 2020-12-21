@@ -141,7 +141,7 @@ function run() {
                     core.setFailed(`'${label}' label is no array or string of regex`);
                 }
             }
-            core.debug(`labelsMap: ${labelsMap}`);
+            core.debug(`labelsMap: ${labelsMap.toString()}`);
             const newLabels = [];
             // eslint-disable-next-line github/array-foreach
             labelsMap.forEach((regexes, key) => {

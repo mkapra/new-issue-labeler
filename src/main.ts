@@ -130,7 +130,7 @@ async function run(): Promise<void> {
         core.setFailed(`'${label}' label is no array or string of regex`)
       }
     }
-    core.debug(`labelsMap: ${labelsMap}`)
+    core.debug(`labelsMap: ${labelsMap.toString()}`)
 
     const newLabels: string[] = []
     // eslint-disable-next-line github/array-foreach

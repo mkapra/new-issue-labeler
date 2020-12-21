@@ -27,7 +27,7 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-    - uses: mkapra/new-issue-labeler@v0.3
+    - uses: mkapra/new-issue-labeler@v1.0
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         configuration-path: ".github/labeler.yml"

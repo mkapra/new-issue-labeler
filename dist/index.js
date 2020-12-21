@@ -99,7 +99,6 @@ function getLabels(configurationData) {
     const labelMap = new Map();
     const labels = yaml.safeLoad(configurationData);
     for (const label in labels) {
-        core.debug(`getLabels(): Label: ${label}`);
         if (typeof labels[label] === 'string') {
             labelMap.set(label, [labels[label]]);
         }
@@ -133,12 +132,11 @@ function run() {
             const newLabels = [];
             // eslint-disable-next-line github/array-foreach
             labelsMap.forEach((regexes, key) => {
-                core.debug(`Key: ${key}, Regexes: ${regexes}`);
                 for (const regex of regexes) {
                     const isRegex = regex.match(/^\/(.+)\/(.*)$/);
                     core.debug(`Checking regex '${regex}': ${isRegex}`);
                     if (isRegex) {
-                        const regexpTest = RegExp(/isRegex[0]/, isRegex[1]);
+                        const regexpTest = RegExp(/isRegex[1]/, isRegex[2]);
                         if (regexpTest.test(triggeredIssue.body)) {
                             if (newLabels.find(e => e === key)) {
                                 newLabels.push(key);

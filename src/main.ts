@@ -80,7 +80,6 @@ function getLabels(configurationData: any): Map<string, string[]> {
   const labelMap: Map<string, string[]> = new Map<string, string[]>()
   const labels: any = yaml.safeLoad(configurationData)
   for (const label in labels) {
-    core.debug(`getLabels(): Label: ${label}`)
     if (typeof labels[label] === 'string') {
       labelMap.set(label, [labels[label]])
     } else if (Array.isArray(labels[label])) {
@@ -125,12 +124,11 @@ async function run(): Promise<void> {
     const newLabels: string[] = []
     // eslint-disable-next-line github/array-foreach
     labelsMap.forEach((regexes: string[], key: string) => {
-      core.debug(`Key: ${key}, Regexes: ${regexes}`)
       for (const regex of regexes) {
         const isRegex = regex.match(/^\/(.+)\/(.*)$/)
         core.debug(`Checking regex '${regex}': ${isRegex}`)
         if (isRegex) {
-          const regexpTest = RegExp(/isRegex[0]/, isRegex[1])
+          const regexpTest = RegExp(/isRegex[1]/, isRegex[2])
           if (regexpTest.test(triggeredIssue.body)) {
             if (newLabels.find(e => e === key)) {
               newLabels.push(key)

@@ -83,6 +83,7 @@ async function run(): Promise<void> {
 
   try {
     const triggeredIssue = new Issue(repo, client)
+    core.debug(`Get configuration file content ${configurationPath}`)
     const configurationFile = await client.repos.getContent({
       owner: repo.owner,
       repo: repo.repo,
@@ -92,6 +93,7 @@ async function run(): Promise<void> {
     if (!data.content) {
       core.setFailed(`Configuration file at ${configurationFile} not found!`)
     }
+    console.log(data.content)
 
     const labels = yaml.safeLoadAll(data.content)
     for (const parsed in labels[0]) {

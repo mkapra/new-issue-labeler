@@ -1,11 +1,13 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'New Issue Labeler'
+description: 'An issue labeler for own needs'
+author: 'Maximilian Kapra'
 inputs:
-  milliseconds: # change this
+  repo-token:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: 'Github Key'
+  configuration-path:
+    required: true
+    description: 'The path to the configuration file'
 runs:
   using: 'node12'
   main: 'dist/index.js'

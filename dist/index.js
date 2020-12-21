@@ -77,7 +77,7 @@ class Issue {
         }
         else {
             // eslint-disable-next-line no-throw-literal
-            throw 'Issue not found';
+            throw 'No issue found...';
         }
         this.repo = repo;
         this.client = client;
@@ -165,6 +165,7 @@ function run() {
             }
         }
         catch (error) {
+            core.error(error);
             core.setFailed(error.message);
         }
     });

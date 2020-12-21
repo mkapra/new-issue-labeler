@@ -57,7 +57,7 @@ class Issue {
       }
     } else {
       // eslint-disable-next-line no-throw-literal
-      throw 'Issue not found'
+      throw 'No issue found...'
     }
 
     this.repo = repo
@@ -97,8 +97,8 @@ async function run() {
   try {
     core.debug('Get token...')
     const token = core.getInput('repo-token', {required: true})
-    core.debug('Get configuration-path...')
 
+    core.debug('Get configuration-path...')
     const configurationPath = core.getInput('configuration-path', {
       required: true
     })
@@ -159,6 +159,7 @@ async function run() {
       }
     }
   } catch (error) {
+    core.error(error)
     core.setFailed(error.message)
   }
 }

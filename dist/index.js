@@ -105,6 +105,7 @@ function run() {
             for (const parsed in labels[0]) {
                 const regexes = labels[0][parsed];
                 for (const regex in regexes) {
+                    core.debug(`Checking for '${regex}'`);
                     const isRegex = regex.match(/^\/(.+)\/(.*)$/);
                     if (isRegex) {
                         // TODO: check for matching regex
@@ -117,7 +118,7 @@ function run() {
                         }
                     }
                     else {
-                        core.debug(`Skipping '${regex}' because it is no regex...}`);
+                        core.debug(`Skipping '${regex}' because it is no regex...`);
                     }
                 }
             }

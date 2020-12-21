@@ -2,7 +2,6 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import * as yaml from 'js-yaml'
 import {GitHub} from '@actions/github/lib/utils'
-import assert from "assert";
 
 class Repository {
   owner: string
@@ -93,7 +92,8 @@ function getLabels(configurationData: any): Map<string, string[]> {
   return labelMap
 }
 
-async function run(): Promise<void> {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+async function run() {
   try {
     core.debug('Get token...')
     const token = core.getInput('repo-token', {required: true})
@@ -155,7 +155,7 @@ async function run(): Promise<void> {
       try {
         await triggeredIssue.addLabel(newLabels)
       } catch (e) {
-        core.setFailed(`Failed setting label: ${e}`)
+        core.setFailed(`Failed setting label: ${e.message}`)
       }
     }
   } catch (error) {

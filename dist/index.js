@@ -111,6 +111,7 @@ function getLabels(configurationData) {
     }
     return labelMap;
 }
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -159,7 +160,7 @@ function run() {
                     yield triggeredIssue.addLabel(newLabels);
                 }
                 catch (e) {
-                    core.setFailed(`Failed setting label: ${e}`);
+                    core.setFailed(`Failed setting label: ${e.message}`);
                 }
             }
         }

@@ -10,8 +10,7 @@ class Repository {
   client: InstanceType<typeof GitHub>
 
   constructor(
-    owner: string,
-    repo: string,
+    owner: string, repo: string,
     client: InstanceType<typeof GitHub>,
     token: string
   ) {
@@ -39,18 +38,22 @@ class Repository {
 
 class Issue {
   heading: string
-  body: string | undefined
+  body: string
   repo: Repository
   client: InstanceType<typeof GitHub>
   iNumber: number
 
   constructor(repo: Repository, client: InstanceType<typeof GitHub>) {
-    const issue = github.context.payload.issue
+    const contextIssue = github.context.payload.issue
 
-    if (issue) {
+    if (contextIssue) {
       // this.heading = issue.title
       this.heading = ''
-      this.body = issue.body
+      if (contextIssue.body) {
+        this.body = contextIssue.body
+      } else {
+        this.body = ''
+      }
     } else {
       // eslint-disable-next-line no-throw-literal
       throw 'Issue not found'
@@ -70,6 +73,23 @@ class Issue {
       labels: newLabels
     })
   }
+}
+
+function getLabels(configurationData: string): Map<string, string[]> {
+  const labelMap: Map<string, string[]> = new Map<string, string[]>()
+  const labels: any = yaml.safeLoad(configurationData)
+  core.debug(`Config file:\n${labels.toString()}`)
+  for (const label in labels) {
+    if (typeof labels[label] === 'string') {
+      labelMap.set(label, [labels[label]])
+    } else if (Array.isArray(labels[label])) {
+      labelMap.set(label, labels[label])
+    } else {
+      core.setFailed(`'${label}' label is no array or string of regex`)
+    }
+  }
+
+  return labelMap
 }
 
 async function run(): Promise<void> {
@@ -98,28 +118,41 @@ async function run(): Promise<void> {
       configurationPath
     )
 
+    const labelMap: Map<string, string[]> = new Map<string, string[]>()
     const labels: any = yaml.safeLoad(configurationData)
-    core.debug(`Config file:\n${labels.toString()}`)
-    for (const parsed in labels) {
-      const regexes = labels[parsed]
-      for (const regex in regexes) {
-        core.debug(`Checking for '${regex}'`)
-        const isRegex = regex.match(/^\/(.+)\/(.*)$/)
-        if (isRegex) {
-          // TODO: check for matching regex
-          const matchRegex = new RegExp(/isRegex[0]/, isRegex[1])
-          if (matchRegex.test(regex)) {
-            await triggeredIssue.addLabel([regex])
-          } else {
-            core.debug(
-              `Regex '${regex}' does not match the issue body. Skipping...`
-            )
-          }
-        } else {
-          core.debug(`Skipping '${regex}' because it is no regex...`)
-        }
+
+    const labelsMap: Map<string, string[]> = getLabels(labels)
+    for (const label in labels) {
+      if (typeof labels[label] === 'string') {
+        labelMap.set(label, [labels[label]])
+      } else if (Array.isArray(labels[label])) {
+        labelMap.set(label, labels[label])
+      } else {
+        core.setFailed(`'${label}' label is no array or string of regex`)
       }
     }
+
+    const newLabels: string[] = []
+    // eslint-disable-next-line github/array-foreach
+    labelsMap.forEach((regexes: string[], key: string) => {
+      for (const regex of regexes) {
+        const isRegex = regex.match(/^\/(.+)\/(.*)$/)
+        if (isRegex) {
+          const regexpTest = RegExp(isRegex[0], isRegex[1])
+          if (regexpTest.test(triggeredIssue.body)) {
+            if (newLabels.find(e => e === key)) {
+              newLabels.push(key)
+            }
+          } else {
+            core.debug(`'${regex}' does not match issue body`)
+          }
+        }
+      }
+    })
+    core.debug(
+      `Adding labels '${newLabels}' to issue #${triggeredIssue.iNumber}`
+    )
+    await triggeredIssue.addLabel(newLabels)
   } catch (error) {
     core.setFailed(error.message)
   }

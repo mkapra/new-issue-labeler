@@ -64,11 +64,16 @@ class Repository {
 }
 class Issue {
     constructor(repo, client) {
-        const issue = github.context.payload.issue;
-        if (issue) {
+        const contextIssue = github.context.payload.issue;
+        if (contextIssue) {
             // this.heading = issue.title
             this.heading = '';
-            this.body = issue.body;
+            if (contextIssue.body) {
+                this.body = contextIssue.body;
+            }
+            else {
+                this.body = '';
+            }
         }
         else {
             // eslint-disable-next-line no-throw-literal
@@ -90,6 +95,23 @@ class Issue {
         });
     }
 }
+function getLabels(configurationData) {
+    const labelMap = new Map();
+    const labels = yaml.safeLoad(configurationData);
+    core.debug(`Config file:\n${labels.toString()}`);
+    for (const label in labels) {
+        if (typeof labels[label] === 'string') {
+            labelMap.set(label, [labels[label]]);
+        }
+        else if (Array.isArray(labels[label])) {
+            labelMap.set(label, labels[label]);
+        }
+        else {
+            core.setFailed(`'${label}' label is no array or string of regex`);
+        }
+    }
+    return labelMap;
+}
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         core.debug('Get token...');
@@ -106,28 +128,40 @@ function run() {
             core.debug('Create issue object...');
             const triggeredIssue = new Issue(repo, client);
             const configurationData = yield repo.getConfigurationFile(configurationPath);
+            const labelMap = new Map();
             const labels = yaml.safeLoad(configurationData);
-            core.debug(`Config file:\n${labels.toString()}`);
-            for (const parsed in labels) {
-                const regexes = labels[parsed];
-                for (const regex in regexes) {
-                    core.debug(`Checking for '${regex}'`);
-                    const isRegex = regex.match(/^\/(.+)\/(.*)$/);
-                    if (isRegex) {
-                        // TODO: check for matching regex
-                        const matchRegex = new RegExp(/isRegex[0]/, isRegex[1]);
-                        if (matchRegex.test(regex)) {
-                            yield triggeredIssue.addLabel([regex]);
-                        }
-                        else {
-                            core.debug(`Regex '${regex}' does not match the issue body. Skipping...`);
-                        }
-                    }
-                    else {
-                        core.debug(`Skipping '${regex}' because it is no regex...`);
-                    }
+            const labelsMap = getLabels(labels);
+            for (const label in labels) {
+                if (typeof labels[label] === 'string') {
+                    labelMap.set(label, [labels[label]]);
+                }
+                else if (Array.isArray(labels[label])) {
+                    labelMap.set(label, labels[label]);
+                }
+                else {
+                    core.setFailed(`'${label}' label is no array or string of regex`);
                 }
             }
+            const newLabels = [];
+            // eslint-disable-next-line github/array-foreach
+            labelsMap.forEach((regexes, key) => {
+                for (const regex of regexes) {
+                    const isRegex = regex.match(/^\/(.+)\/(.*)$/);
+                    if (isRegex) {
+                        const regexpTest = RegExp(isRegex[0], isRegex[1]);
+                        if (regexpTest.test(triggeredIssue.body)) {
+                            if (newLabels.find(e => e === key)) {
+                                newLabels.push(key);
+                            }
+                        }
+                        else {
+                            core.debug(`'${regex}' does not match issue body`);
+                        }
+                    }
+                }
+            });
+            core.debug(`Adding labels '${newLabels}' to issue #${triggeredIssue.iNumber}`);
+            yield triggeredIssue.addLabel(newLabels);
         }
         catch (error) {
             core.setFailed(error.message);

@@ -96,7 +96,6 @@ class Issue {
     }
 }
 function getLabels(configurationData) {
-    core.debug(`configurationData: ${configurationData}`);
     const labelMap = new Map();
     const labels = yaml.safeLoad(configurationData);
     for (const label in labels) {
@@ -129,8 +128,8 @@ function run() {
             core.debug('Create issue object...');
             const triggeredIssue = new Issue(repo, client);
             const configurationData = yield repo.getConfigurationFile(configurationPath);
-            const labels = yaml.safeLoad(configurationData);
-            const labelsMap = getLabels(labels);
+            const configurationFile = yaml.safeLoad(configurationData);
+            const labelsMap = getLabels(configurationFile);
             const newLabels = [];
             // eslint-disable-next-line github/array-foreach
             labelsMap.forEach((regexes, key) => {

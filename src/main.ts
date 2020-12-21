@@ -75,8 +75,7 @@ class Issue {
   }
 }
 
-function getLabels(configurationData: string): Map<string, string[]> {
-  core.debug(`configurationData: ${configurationData}`)
+function getLabels(configurationData: any): Map<string, string[]> {
   const labelMap: Map<string, string[]> = new Map<string, string[]>()
   const labels: any = yaml.safeLoad(configurationData)
   for (const label in labels) {
@@ -119,8 +118,8 @@ async function run(): Promise<void> {
       configurationPath
     )
 
-    const labels: any = yaml.safeLoad(configurationData)
-    const labelsMap: Map<string, string[]> = getLabels(labels)
+    const configurationFile: any = yaml.safeLoad(configurationData)
+    const labelsMap: Map<string, string[]> = getLabels(configurationFile)
 
     const newLabels: string[] = []
     // eslint-disable-next-line github/array-foreach

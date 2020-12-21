@@ -121,6 +121,7 @@ async function run(): Promise<void> {
     core.debug(`ConfigFile getFile(): ${configurationData}`)
     const labelsMap: Map<string, string[]> = getLabels(configurationData)
 
+    core.debug(`Issue Body: ${triggeredIssue.body}`)
     const newLabels: string[] = []
     // eslint-disable-next-line github/array-foreach
     labelsMap.forEach((regexes: string[], key: string) => {
@@ -128,7 +129,7 @@ async function run(): Promise<void> {
         const isRegex = regex.match(/^\/(.+)\/(.*)$/)
         core.debug(`Checking regex '${regex}': ${isRegex}`)
         if (isRegex) {
-          const regexpTest = RegExp(/isRegex[1]/, isRegex[2])
+          const regexpTest = RegExp(isRegex[1], isRegex[2])
           if (regexpTest.test(triggeredIssue.body)) {
             if (newLabels.find(e => e === key)) {
               newLabels.push(key)

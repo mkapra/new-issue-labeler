@@ -129,6 +129,7 @@ function run() {
             const configurationData = yield repo.getConfigurationFile(configurationPath);
             core.debug(`ConfigFile getFile(): ${configurationData}`);
             const labelsMap = getLabels(configurationData);
+            core.debug(`Issue Body: ${triggeredIssue.body}`);
             const newLabels = [];
             // eslint-disable-next-line github/array-foreach
             labelsMap.forEach((regexes, key) => {
@@ -136,7 +137,7 @@ function run() {
                     const isRegex = regex.match(/^\/(.+)\/(.*)$/);
                     core.debug(`Checking regex '${regex}': ${isRegex}`);
                     if (isRegex) {
-                        const regexpTest = RegExp(/isRegex[1]/, isRegex[2]);
+                        const regexpTest = RegExp(isRegex[1], isRegex[2]);
                         if (regexpTest.test(triggeredIssue.body)) {
                             if (newLabels.find(e => e === key)) {
                                 newLabels.push(key);

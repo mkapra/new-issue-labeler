@@ -160,8 +160,13 @@ function run() {
                     }
                 }
             });
-            core.debug(`Adding labels '${newLabels}' to issue #${triggeredIssue.iNumber}`);
-            yield triggeredIssue.addLabel(newLabels);
+            if (newLabels.length === 0) {
+                core.debug(`Skipping issue #${triggeredIssue.iNumber}. No matching regexes found`);
+            }
+            else {
+                core.debug(`Adding labels '${newLabels}' to issue #${triggeredIssue.iNumber}`);
+                yield triggeredIssue.addLabel(newLabels);
+            }
         }
         catch (error) {
             core.setFailed(error.message);

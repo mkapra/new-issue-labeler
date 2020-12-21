@@ -117,24 +117,13 @@ async function run(): Promise<void> {
       configurationPath
     )
 
-    const labelMap: Map<string, string[]> = new Map<string, string[]>()
     const labels: any = yaml.safeLoad(configurationData)
-
     const labelsMap: Map<string, string[]> = getLabels(labels)
-    for (const label in labels) {
-      if (typeof labels[label] === 'string') {
-        labelMap.set(label, [labels[label]])
-      } else if (Array.isArray(labels[label])) {
-        labelMap.set(label, labels[label])
-      } else {
-        core.setFailed(`'${label}' label is no array or string of regex`)
-      }
-    }
-    core.debug(`labelsMap: ${labelsMap.entries()}`)
 
     const newLabels: string[] = []
     // eslint-disable-next-line github/array-foreach
     labelsMap.forEach((regexes: string[], key: string) => {
+      core.debug(`Key: ${key}, Regexes: ${regexes}`)
       for (const regex of regexes) {
         const isRegex = regex.match(/^\/(.+)\/(.*)$/)
         core.debug(`Checking regex '${regex}': ${isRegex}`)

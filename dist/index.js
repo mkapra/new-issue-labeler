@@ -129,9 +129,7 @@ function run() {
             const triggeredIssue = new Issue(repo, client);
             const configurationData = yield repo.getConfigurationFile(configurationPath);
             core.debug(`ConfigFile getFile(): ${configurationData}`);
-            const configurationFile = yaml.safeLoad(configurationData);
-            JSON.stringify(configurationFile);
-            const labelsMap = getLabels(configurationFile);
+            const labelsMap = getLabels(configurationData);
             const newLabels = [];
             // eslint-disable-next-line github/array-foreach
             labelsMap.forEach((regexes, key) => {

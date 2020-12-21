@@ -120,9 +120,7 @@ async function run(): Promise<void> {
     )
 
     core.debug(`ConfigFile getFile(): ${configurationData}`)
-    const configurationFile: any = yaml.safeLoad(configurationData)
-    JSON.stringify(configurationFile)
-    const labelsMap: Map<string, string[]> = getLabels(configurationFile)
+    const labelsMap: Map<string, string[]> = getLabels(configurationData)
 
     const newLabels: string[] = []
     // eslint-disable-next-line github/array-foreach

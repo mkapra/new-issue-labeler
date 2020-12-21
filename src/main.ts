@@ -10,7 +10,8 @@ class Repository {
   client: InstanceType<typeof GitHub>
 
   constructor(
-    owner: string, repo: string,
+    owner: string,
+    repo: string,
     client: InstanceType<typeof GitHub>,
     token: string
   ) {
@@ -120,6 +121,7 @@ async function run(): Promise<void> {
 
     core.debug(`ConfigFile getFile(): ${configurationData}`)
     const configurationFile: any = yaml.safeLoad(configurationData)
+    JSON.stringify(configurationFile)
     const labelsMap: Map<string, string[]> = getLabels(configurationFile)
 
     const newLabels: string[] = []

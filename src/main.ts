@@ -96,7 +96,7 @@ function getLabels(configurationData: any): Map<string, string[]> {
 async function run() {
   try {
     core.debug('Get token...')
-    const token = core.getInput("repo-token", { required: true })
+    const token = core.getInput('repo-token', {required: true})
 
     core.debug('Get configuration-path...')
     const configurationPath = core.getInput('configuration-path', {

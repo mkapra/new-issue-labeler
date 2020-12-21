@@ -39,7 +39,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(2186));
 const github = __importStar(__webpack_require__(5438));
 const yaml = __importStar(__webpack_require__(1917));
-const fs = __importStar(__webpack_require__(5747));
 class Repository {
     constructor(owner, repo, client, token) {
         this.owner = owner;
@@ -48,26 +47,37 @@ class Repository {
         this.client = client;
     }
     getConfigurationFile(configurationPath) {
-        const labelData = yaml.safeLoad(fs.readFileSync(configurationPath, 'utf-8'));
-        if (labelData) {
-            return labelData;
-        }
-        else {
-            // TODO: Throw exception
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            core.debug(`Get configuration file content ${configurationPath}`);
+            const configurationFile = yield this.client.repos.getContent({
+                owner: this.owner,
+                repo: this.repo,
+                path: configurationPath
+            });
+            const data = configurationFile.data;
+            if (!data.content) {
+                core.setFailed(`Configuration file at ${configurationFile} not found!`);
+            }
+            return Buffer.from(data.content, 'base64').toString('utf-8');
+        });
     }
 }
 class Issue {
     constructor(repo, client) {
-        const issue = github.context.payload.issue;
-        if (issue) {
+        const contextIssue = github.context.payload.issue;
+        if (contextIssue) {
             // this.heading = issue.title
             this.heading = '';
-            this.body = issue.body;
+            if (contextIssue.body) {
+                this.body = contextIssue.body;
+            }
+            else {
+                this.body = '';
+            }
         }
         else {
             // eslint-disable-next-line no-throw-literal
-            throw 'Issue not found';
+            throw 'No issue found...';
         }
         this.repo = repo;
         this.client = client;
@@ -85,38 +95,69 @@ class Issue {
         });
     }
 }
+function getLabels(configurationData) {
+    const labelMap = new Map();
+    const labels = yaml.safeLoad(configurationData);
+    for (const label in labels) {
+        if (typeof labels[label] === 'string') {
+            labelMap.set(label, [labels[label]]);
+        }
+        else if (Array.isArray(labels[label])) {
+            labelMap.set(label, labels[label]);
+        }
+        else {
+            core.setFailed(`'${label}' label is no array or string of regex`);
+        }
+    }
+    return labelMap;
+}
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const token = core.getInput('repo-token', { required: true });
-        const configurationPath = core.getInput('configuration-path', {
-            required: true
-        });
-        const client = github.getOctokit(token);
-        const repo = new Repository(github.context.repo.owner, github.context.repo.repo, client, token);
         try {
+            core.debug('Get token...');
+            const token = core.getInput('repo-token', { required: true });
+            core.debug('Get configuration-path...');
+            const configurationPath = core.getInput('configuration-path', {
+                required: true
+            });
+            core.debug('Create client...');
+            const client = github.getOctokit(token);
+            core.debug('Create repo object...');
+            const repo = new Repository(github.context.repo.owner, github.context.repo.repo, client, token);
+            core.debug('Create issue object...');
             const triggeredIssue = new Issue(repo, client);
-            const labels = yaml.safeLoadAll(fs.readFileSync(configurationPath, 'utf-8'));
-            for (const parsed in labels[0]) {
-                const regexes = labels[0][parsed];
-                for (const regex in regexes) {
+            const configurationData = yield repo.getConfigurationFile(configurationPath);
+            core.debug(`ConfigFile getFile(): ${configurationData}`);
+            const labelsMap = getLabels(configurationData);
+            const newLabels = [];
+            // eslint-disable-next-line github/array-foreach
+            labelsMap.forEach((regexes, key) => {
+                for (const regex of regexes) {
                     const isRegex = regex.match(/^\/(.+)\/(.*)$/);
-                    if (isRegex) {
-                        // TODO: check for matching regex
-                        const matchRegex = new RegExp(/isRegex[0]/, isRegex[1]);
-                        if (matchRegex.test(regex)) {
-                            yield triggeredIssue.addLabel([regex]);
+                    if (isRegex && isRegex.length > 1) {
+                        const regexpTest = RegExp(isRegex[1], isRegex[2]);
+                        if (regexpTest.test(triggeredIssue.body)) {
+                            if (!newLabels.find(e => e === key)) {
+                                newLabels.push(key);
+                            }
                         }
                         else {
-                            core.debug(`Regex '${regex}' does not match the issue body. Skipping...`);
+                            core.debug(`'${regex}' does not match issue body`);
                         }
                     }
-                    else {
-                        core.debug(`Skipping '${regex}' because it is no regex...}`);
-                    }
                 }
+            });
+            if (newLabels.length === 0) {
+                core.debug(`Skipping issue #${triggeredIssue.iNumber}. No matching regexes found`);
+            }
+            else {
+                core.debug(`Adding labels '${newLabels}' to issue #${triggeredIssue.iNumber}`);
+                yield triggeredIssue.addLabel(newLabels);
             }
         }
         catch (error) {
+            core.error(error);
             core.setFailed(error.message);
         }
     });

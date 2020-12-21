@@ -1,7 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import * as yaml from 'js-yaml'
-import * as fs from 'fs'
 import {GitHub} from '@actions/github/lib/utils'
 
 class Repository {
@@ -22,33 +21,43 @@ class Repository {
     this.client = client
   }
 
-  getConfigurationFile(configurationPath: string): string | object | undefined {
-    const labelData = yaml.safeLoad(fs.readFileSync(configurationPath, 'utf-8'))
-    if (labelData) {
-      return labelData
-    } else {
-      // TODO: Throw exception
+  async getConfigurationFile(configurationPath: string): Promise<string> {
+    core.debug(`Get configuration file content ${configurationPath}`)
+    const configurationFile = await this.client.repos.getContent({
+      owner: this.owner,
+      repo: this.repo,
+      path: configurationPath
+    })
+    const data: any = configurationFile.data
+    if (!data.content) {
+      core.setFailed(`Configuration file at ${configurationFile} not found!`)
     }
+
+    return Buffer.from(data.content, 'base64').toString('utf-8')
   }
 }
 
 class Issue {
   heading: string
-  body: string | undefined
+  body: string
   repo: Repository
   client: InstanceType<typeof GitHub>
   iNumber: number
 
   constructor(repo: Repository, client: InstanceType<typeof GitHub>) {
-    const issue = github.context.payload.issue
+    const contextIssue = github.context.payload.issue
 
-    if (issue) {
+    if (contextIssue) {
       // this.heading = issue.title
       this.heading = ''
-      this.body = issue.body
+      if (contextIssue.body) {
+        this.body = contextIssue.body
+      } else {
+        this.body = ''
+      }
     } else {
       // eslint-disable-next-line no-throw-literal
-      throw 'Issue not found'
+      throw 'No issue found...'
     }
 
     this.repo = repo
@@ -67,55 +76,83 @@ class Issue {
   }
 }
 
-async function run(): Promise<void> {
-  const token = core.getInput('repo-token', {required: true})
-  const configurationPath = core.getInput('configuration-path', {
-    required: true
-  })
-
-  const client = github.getOctokit(token)
-  const repo = new Repository(
-    github.context.repo.owner,
-    github.context.repo.repo,
-    client,
-    token
-  )
-
-  try {
-    const triggeredIssue = new Issue(repo, client)
-    core.debug(`Get configuration file content ${configurationPath}`)
-    const configurationFile = await client.repos.getContent({
-      owner: repo.owner,
-      repo: repo.repo,
-      path: configurationPath
-    })
-    const data: any = configurationFile.data
-    if (!data.content) {
-      core.setFailed(`Configuration file at ${configurationFile} not found!`)
+function getLabels(configurationData: any): Map<string, string[]> {
+  const labelMap: Map<string, string[]> = new Map<string, string[]>()
+  const labels: any = yaml.safeLoad(configurationData)
+  for (const label in labels) {
+    if (typeof labels[label] === 'string') {
+      labelMap.set(label, [labels[label]])
+    } else if (Array.isArray(labels[label])) {
+      labelMap.set(label, labels[label])
+    } else {
+      core.setFailed(`'${label}' label is no array or string of regex`)
     }
-    console.log(data.content)
+  }
 
-    const labels = yaml.safeLoadAll(data.content)
-    for (const parsed in labels[0]) {
-      const regexes = labels[0][parsed]
-      for (const regex in regexes) {
+  return labelMap
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+async function run() {
+  try {
+    core.debug('Get token...')
+    const token = core.getInput('repo-token', {required: true})
+
+    core.debug('Get configuration-path...')
+    const configurationPath = core.getInput('configuration-path', {
+      required: true
+    })
+
+    core.debug('Create client...')
+    const client = github.getOctokit(token)
+    core.debug('Create repo object...')
+    const repo = new Repository(
+      github.context.repo.owner,
+      github.context.repo.repo,
+      client,
+      token
+    )
+
+    core.debug('Create issue object...')
+    const triggeredIssue = new Issue(repo, client)
+    const configurationData: string = await repo.getConfigurationFile(
+      configurationPath
+    )
+
+    core.debug(`ConfigFile getFile(): ${configurationData}`)
+    const labelsMap: Map<string, string[]> = getLabels(configurationData)
+
+    const newLabels: string[] = []
+    // eslint-disable-next-line github/array-foreach
+    labelsMap.forEach((regexes: string[], key: string) => {
+      for (const regex of regexes) {
         const isRegex = regex.match(/^\/(.+)\/(.*)$/)
-        if (isRegex) {
-          // TODO: check for matching regex
-          const matchRegex = new RegExp(/isRegex[0]/, isRegex[1])
-          if (matchRegex.test(regex)) {
-            await triggeredIssue.addLabel([regex])
+        if (isRegex && isRegex.length > 1) {
+          const regexpTest = RegExp(isRegex[1], isRegex[2])
+
+          if (regexpTest.test(triggeredIssue.body)) {
+            if (!newLabels.find(e => e === key)) {
+              newLabels.push(key)
+            }
           } else {
-            core.debug(
-              `Regex '${regex}' does not match the issue body. Skipping...`
-            )
+            core.debug(`'${regex}' does not match issue body`)
           }
-        } else {
-          core.debug(`Skipping '${regex}' because it is no regex...}`)
         }
       }
+    })
+
+    if (newLabels.length === 0) {
+      core.debug(
+        `Skipping issue #${triggeredIssue.iNumber}. No matching regexes found`
+      )
+    } else {
+      core.debug(
+        `Adding labels '${newLabels}' to issue #${triggeredIssue.iNumber}`
+      )
+      await triggeredIssue.addLabel(newLabels)
     }
   } catch (error) {
+    core.error(error)
     core.setFailed(error.message)
   }
 }

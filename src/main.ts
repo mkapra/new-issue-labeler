@@ -78,7 +78,6 @@ class Issue {
 function getLabels(configurationData: string): Map<string, string[]> {
   const labelMap: Map<string, string[]> = new Map<string, string[]>()
   const labels: any = yaml.safeLoad(configurationData)
-  core.debug(`Config file:\n${labels.toString()}`)
   for (const label in labels) {
     if (typeof labels[label] === 'string') {
       labelMap.set(label, [labels[label]])
@@ -137,6 +136,7 @@ async function run(): Promise<void> {
     labelsMap.forEach((regexes: string[], key: string) => {
       for (const regex of regexes) {
         const isRegex = regex.match(/^\/(.+)\/(.*)$/)
+        core.debug(`Checking regex '${regex}': ${isRegex}`)
         if (isRegex) {
           const regexpTest = RegExp(isRegex[0], isRegex[1])
           if (regexpTest.test(triggeredIssue.body)) {

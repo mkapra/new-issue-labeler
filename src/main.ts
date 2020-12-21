@@ -83,7 +83,17 @@ async function run(): Promise<void> {
 
   try {
     const triggeredIssue = new Issue(repo, client)
-    const labels = yaml.safeLoadAll(fs.readFileSync(configurationPath, 'utf-8'))
+    const configurationFile = await client.repos.getContent({
+      owner: repo.owner,
+      repo: repo.repo,
+      path: configurationPath
+    })
+    const data: any = configurationFile.data
+    if (!data.content) {
+      core.setFailed(`Configuration file at ${configurationFile} not found!`)
+    }
+
+    const labels = yaml.safeLoadAll(data.content)
     for (const parsed in labels[0]) {
       const regexes = labels[0][parsed]
       for (const regex in regexes) {

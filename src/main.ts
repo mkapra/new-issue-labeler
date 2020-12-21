@@ -93,6 +93,7 @@ async function run(): Promise<void> {
     )
 
     const labels = yaml.safeLoadAll(configurationData)
+    core.debug(`Config file:\n${labels}`)
     for (const parsed in labels[0]) {
       const regexes = labels[0][parsed]
       for (const regex in regexes) {

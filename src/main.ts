@@ -76,9 +76,11 @@ class Issue {
 }
 
 function getLabels(configurationData: string): Map<string, string[]> {
+  core.debug(`configurationData: ${configurationData}`)
   const labelMap: Map<string, string[]> = new Map<string, string[]>()
   const labels: any = yaml.safeLoad(configurationData)
   for (const label in labels) {
+    core.debug(`getLabels(): Label: ${label}`)
     if (typeof labels[label] === 'string') {
       labelMap.set(label, [labels[label]])
     } else if (Array.isArray(labels[label])) {

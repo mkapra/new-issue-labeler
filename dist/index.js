@@ -96,9 +96,11 @@ class Issue {
     }
 }
 function getLabels(configurationData) {
+    core.debug(`configurationData: ${configurationData}`);
     const labelMap = new Map();
     const labels = yaml.safeLoad(configurationData);
     for (const label in labels) {
+        core.debug(`getLabels(): Label: ${label}`);
         if (typeof labels[label] === 'string') {
             labelMap.set(label, [labels[label]]);
         }

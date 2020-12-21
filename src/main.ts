@@ -2,6 +2,7 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import * as yaml from 'js-yaml'
 import {GitHub} from '@actions/github/lib/utils'
+import assert from "assert";
 
 class Repository {
   owner: string
@@ -151,7 +152,11 @@ async function run(): Promise<void> {
       core.debug(
         `Adding labels '${newLabels}' to issue #${triggeredIssue.iNumber}`
       )
-      await triggeredIssue.addLabel(newLabels)
+      try {
+        await triggeredIssue.addLabel(newLabels)
+      } catch (e) {
+        core.setFailed(`Failed setting label: ${e}`)
+      }
     }
   } catch (error) {
     core.setFailed(error.message)

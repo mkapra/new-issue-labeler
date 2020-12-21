@@ -128,16 +128,12 @@ async function run(): Promise<void> {
       for (const regex of regexes) {
         const isRegex = regex.match(/^\/(.+)\/(.*)$/)
         core.debug(`Checking regex '${regex}': ${isRegex}`)
-        if (isRegex) {
-          let regexpTest
-          if (isRegex[2]) {
-            regexpTest = RegExp(isRegex[1], isRegex[2])
-          } else {
-            regexpTest = RegExp(isRegex[1])
-          }
+        if (isRegex && isRegex.length > 1) {
+          core.debug(`Checking regex successful... Continuing with test()`)
+          const regexpTest = RegExp(isRegex[1], isRegex[2])
 
           if (regexpTest.test(triggeredIssue.body)) {
-            if (newLabels.find(e => e === key)) {
+            if (!newLabels.find(e => e === key)) {
               newLabels.push(key)
             }
           } else {

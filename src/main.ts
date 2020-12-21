@@ -130,7 +130,7 @@ async function run(): Promise<void> {
         const isRegex = regex.match(/^\/(.+)\/(.*)$/)
         core.debug(`Checking regex '${regex}': ${isRegex}`)
         if (isRegex) {
-          const regexpTest = RegExp(isRegex[0], isRegex[1])
+          const regexpTest = RegExp(/isRegex[0]/, isRegex[1])
           if (regexpTest.test(triggeredIssue.body)) {
             if (newLabels.find(e => e === key)) {
               newLabels.push(key)

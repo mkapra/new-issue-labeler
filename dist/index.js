@@ -39,22 +39,12 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(2186));
 const github = __importStar(__webpack_require__(5438));
 const yaml = __importStar(__webpack_require__(1917));
-const fs = __importStar(__webpack_require__(5747));
 class Repository {
     constructor(owner, repo, client, token) {
         this.owner = owner;
         this.repo = repo;
         this.token = token;
         this.client = client;
-    }
-    getConfigurationFile(configurationPath) {
-        const labelData = yaml.safeLoad(fs.readFileSync(configurationPath, 'utf-8'));
-        if (labelData) {
-            return labelData;
-        }
-        else {
-            // TODO: Throw exception
-        }
     }
 }
 class Issue {
@@ -87,15 +77,31 @@ class Issue {
 }
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        core.debug('Get token...');
         const token = core.getInput('repo-token', { required: true });
+        core.debug('Get configuration-path...');
         const configurationPath = core.getInput('configuration-path', {
             required: true
         });
+        core.debug('Create client...');
         const client = github.getOctokit(token);
+        core.debug('Create repo object...');
         const repo = new Repository(github.context.repo.owner, github.context.repo.repo, client, token);
         try {
+            core.debug('Create issue object...');
             const triggeredIssue = new Issue(repo, client);
-            const labels = yaml.safeLoadAll(fs.readFileSync(configurationPath, 'utf-8'));
+            core.debug(`Get configuration file content ${configurationPath}`);
+            const configurationFile = yield client.repos.getContent({
+                owner: repo.owner,
+                repo: repo.repo,
+                path: configurationPath
+            });
+            const data = configurationFile.data;
+            if (!data.content) {
+                core.setFailed(`Configuration file at ${configurationFile} not found!`);
+            }
+            core.debug(data.content);
+            const labels = yaml.safeLoadAll(data.content);
             for (const parsed in labels[0]) {
                 const regexes = labels[0][parsed];
                 for (const regex in regexes) {

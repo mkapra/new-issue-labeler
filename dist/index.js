@@ -153,12 +153,7 @@ function run() {
             }
             else {
                 core.debug(`Adding labels '${newLabels}' to issue #${triggeredIssue.iNumber}`);
-                try {
-                    yield triggeredIssue.addLabel(newLabels);
-                }
-                catch (e) {
-                    core.setFailed(`Failed setting label: ${e.message}`);
-                }
+                yield triggeredIssue.addLabel(newLabels);
             }
         }
         catch (error) {

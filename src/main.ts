@@ -149,11 +149,7 @@ async function run() {
       core.debug(
         `Adding labels '${newLabels}' to issue #${triggeredIssue.iNumber}`
       )
-      try {
-        await triggeredIssue.addLabel(newLabels)
-      } catch (e) {
-        core.setFailed(`Failed setting label: ${e.message}`)
-      }
+      await triggeredIssue.addLabel(newLabels)
     }
   } catch (error) {
     core.error(error)

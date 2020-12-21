@@ -21,4 +21,5 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./
         with:
-          milliseconds: 1000
+          repo-token: "1234"
+          configuration-path: "1234"

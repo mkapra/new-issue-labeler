@@ -1,7 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import * as yaml from 'js-yaml'
-import * as fs from 'fs'
 import {GitHub} from '@actions/github/lib/utils'
 
 class Repository {
@@ -89,9 +88,11 @@ async function run(): Promise<void> {
     if (!data.content) {
       core.setFailed(`Configuration file at ${configurationFile} not found!`)
     }
-    core.debug(data.content)
+    const configurationData = Buffer.from(data.content, 'base64').toString(
+      'utf-8'
+    )
 
-    const labels = yaml.safeLoadAll(data.content)
+    const labels = yaml.safeLoadAll(configurationData)
     for (const parsed in labels[0]) {
       const regexes = labels[0][parsed]
       for (const regex in regexes) {

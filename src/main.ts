@@ -21,15 +21,6 @@ class Repository {
     this.token = token
     this.client = client
   }
-
-  getConfigurationFile(configurationPath: string): string | object | undefined {
-    const labelData = yaml.safeLoad(fs.readFileSync(configurationPath, 'utf-8'))
-    if (labelData) {
-      return labelData
-    } else {
-      // TODO: Throw exception
-    }
-  }
 }
 
 class Issue {
@@ -68,12 +59,16 @@ class Issue {
 }
 
 async function run(): Promise<void> {
+  core.debug('Get token...')
   const token = core.getInput('repo-token', {required: true})
+  core.debug('Get configuration-path...')
   const configurationPath = core.getInput('configuration-path', {
     required: true
   })
 
+  core.debug('Create client...')
   const client = github.getOctokit(token)
+  core.debug('Create repo object...')
   const repo = new Repository(
     github.context.repo.owner,
     github.context.repo.repo,
@@ -82,6 +77,7 @@ async function run(): Promise<void> {
   )
 
   try {
+    core.debug('Create issue object...')
     const triggeredIssue = new Issue(repo, client)
     core.debug(`Get configuration file content ${configurationPath}`)
     const configurationFile = await client.repos.getContent({
@@ -93,7 +89,7 @@ async function run(): Promise<void> {
     if (!data.content) {
       core.setFailed(`Configuration file at ${configurationFile} not found!`)
     }
-    console.log(data.content)
+    core.debug(data.content)
 
     const labels = yaml.safeLoadAll(data.content)
     for (const parsed in labels[0]) {

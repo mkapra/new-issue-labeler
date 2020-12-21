@@ -96,7 +96,7 @@ function getLabels(configurationData: any): Map<string, string[]> {
 async function run() {
   try {
     core.debug('Get token...')
-    const token = core.getInput('repo-token', {required: true})
+    const token = core.getInput("repo-token", { required: true })
 
     core.debug('Get configuration-path...')
     const configurationPath = core.getInput('configuration-path', {
@@ -122,15 +122,12 @@ async function run() {
     core.debug(`ConfigFile getFile(): ${configurationData}`)
     const labelsMap: Map<string, string[]> = getLabels(configurationData)
 
-    core.debug(`Issue Body: ${triggeredIssue.body}`)
     const newLabels: string[] = []
     // eslint-disable-next-line github/array-foreach
     labelsMap.forEach((regexes: string[], key: string) => {
       for (const regex of regexes) {
         const isRegex = regex.match(/^\/(.+)\/(.*)$/)
-        core.debug(`Checking regex '${regex}': ${isRegex}`)
         if (isRegex && isRegex.length > 1) {
-          core.debug(`Checking regex successful... Continuing with test()`)
           const regexpTest = RegExp(isRegex[1], isRegex[2])
 
           if (regexpTest.test(triggeredIssue.body)) {
